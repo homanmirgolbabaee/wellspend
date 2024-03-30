@@ -2,3 +2,10 @@ pytesseract
 Pillow
 pandas
 plotly
+weaviate
+os
+pandas
+datetime
+json
+tqdm
+requests
