@@ -56,6 +56,73 @@ def manage_user_profile():
     if st.button("database"):
         read_all_objects()
 
+''' 
+
+### REPLIT COMMIT STARTS HERE ###
+import streamlit as st
+import pandas as pd
+from fpdf import FPDF
+import base64
+import tempfile
+
+def generate_pdf(table):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    for i, row in enumerate(table.itertuples(), 1):
+        pdf.cell(0, 10, f'{i}. Category: {row.Category} - Item: {row.Item} - Price: {row.Price}', ln=True)
+    # Save the PDF to a temporary file and return its path
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    pdf.output(temp_file.name)
+    return temp_file.name
+
+def download_link(object_to_download, download_filename, download_link_text):
+    # Generates a link to download the given object_to_download
+    if isinstance(object_to_download, pd.DataFrame):
+        object_to_download = object_to_download.to_csv(index=False)
+    b64 = base64.b64encode(object_to_download.encode()).decode()
+    return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+
+def upload_receipt():
+    st.title("📄 Upload Receipt")
+    uploaded_file = st.file_uploader("Choose a file", type=['png', 'jpg', 'jpeg'])
+    if uploaded_file is not None:
+        st.image(uploaded_file, caption='Uploaded Receipt', use_column_width=True)
+        with st.spinner('Processing...'):
+            # Placeholder for OCR processing - replace with actual OCR/model code
+            # For now, simulate data extraction
+            extracted_data = {
+                'Category': ['Groceries', 'Electronics'],
+                'Item': ['Apples', 'Headphones'],
+                'Price': [5.50, 199.99]
+            }
+            df_extracted = pd.DataFrame(extracted_data)
+            st.success("Receipt processed successfully!")
+            st.dataframe(df_extracted)
+
+            # Assuming you have a function to append or update the extracted data to a database or a file
+            # update_database(df_extracted)
+
+            # Generate and display download link for the report (PDF)
+            if st.button('Download Report as PDF'):
+                pdf_path = generate_pdf(df_extracted)
+                with open(pdf_path, "rb") as pdf_file:
+                    base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
+                pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf">'
+                st.markdown(pdf_display, unsafe_allow_html=True)
+                st.markdown(download_link(df_extracted, 'report.csv', 'Download CSV Report'), unsafe_allow_html=True)
+
+# Remember to call upload_receipt somewhere in your app to display it.
+
+
+
+
+
+
+### REPLIT COMMIT ENDS HERE ###
+
+'''
+
 def upload_receipt():
     st.title("📄 Upload Receipt")
     uploaded_file = st.file_uploader("Choose a file", type=['png', 'jpg', 'jpeg'])
