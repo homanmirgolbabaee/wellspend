@@ -82,6 +82,7 @@ def read_all_objects():
 
     for item in collection.iterator():
         print(item.uuid, item.properties)
+        st.write(item.uuid, item.properties)
         
     client.close()
 
@@ -143,7 +144,7 @@ try:
     # Run Once to create Users Collections
     #create_users_collection(client)
     #create_login_collection(client=client)
-    read_all_objects()
+    #read_all_objects()
     
     
 finally:  # This will always be executed, even if an exception is raised
