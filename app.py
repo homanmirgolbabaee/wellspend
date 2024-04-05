@@ -5,9 +5,11 @@ from database_core import add_to_users_collection, init_weaviate_client , genera
 
 
 
-# Initialize session state for login status
+# Initialize session state for login status and active page
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
+if 'active_page' not in st.session_state:
+    st.session_state.active_page = 'Login'
     
     
 # Placeholder data - Replace with actual data queries from your database
@@ -53,7 +55,7 @@ def manage_user_profile():
         
     if st.button("database"):
         read_all_objects()
-            
+
 def upload_receipt():
     st.title("📄 Upload Receipt")
     uploaded_file = st.file_uploader("Choose a file", type=['png', 'jpg', 'jpeg'])
@@ -89,7 +91,7 @@ def app_login():
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
     
-    if st.button("Login"):
+    if st.button("Login",key="maloo"):
         if email == "example@example.com" and password == "password":
             st.success("Login successful!")
             
@@ -101,7 +103,7 @@ def app_login():
             st.error("Invalid email or password. Please try again.")
             
 def app_logout():
-    if st.button("Logout"):
+    if st.button("Logout",key="logout-btn"):
         st.session_state.logged_in = False  # Reset login status
         st.experimental_rerun()  # Rerun the app to reflect logout on the UI
         
@@ -109,26 +111,37 @@ def app_insights():
     st.title("💡 Insights")
     st.write("Financial and health insights will be detailed here.")
 
-def main():
-    if st.session_state.logged_in:  # Show navigation only if logged in
-        #st.sidebar.image("logo.png", use_column_width=True)
-        st.sidebar.title("Navigate")
-        options = st.sidebar.radio("Select a Page:", 
-                                ["Login", "Dashboard", "Upload Receipt", "User Profile", "Insights", "Settings"])
-        
-        if options == "Login":
-            app_login()
-        elif options == "Dashboard":
-            view_dashboard()
-        elif options == "Upload Receipt":
-            upload_receipt()
-        elif options == "User Profile":
-            manage_user_profile()
-        elif options == "Insights":
-            app_insights()
-        elif options == "Settings":
-            app_settings()
 
+def render_navigation():
+    """Render the navigation bar with buttons for immediate switching."""
+    if st.session_state.logged_in:
+        pages = ["Dashboard", "Upload Receipt", "User Profile", "Insights", "Settings", "Logout"]
+    else:
+        pages = ["Login"]
+    
+    with st.sidebar:
+        st.title("Navigate")
+        for page in pages:
+            if st.button(page):
+                st.session_state.active_page = page
+                st.experimental_rerun()  # Rerun the app with the new active_page
+
+def main():
+    render_navigation()
+
+    if st.session_state.logged_in:
+        if st.session_state.active_page == "Dashboard":
+            view_dashboard()
+        elif st.session_state.active_page == "Upload Receipt":
+            upload_receipt()
+        elif st.session_state.active_page == "User Profile":
+            manage_user_profile()
+        elif st.session_state.active_page == "Insights":
+            app_insights()
+        elif st.session_state.active_page == "Settings":
+            app_settings()
+        elif st.session_state.active_page == "Logout":
+            app_logout()
     else:
         app_login()
 
