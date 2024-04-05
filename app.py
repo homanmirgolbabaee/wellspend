@@ -4,6 +4,12 @@ import plotly.express as px
 from database_core import add_to_users_collection, init_weaviate_client , generate_unique_user_id , read_all_objects
 
 
+
+# Initialize session state for login status
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+    
+    
 # Placeholder data - Replace with actual data queries from your database
 user_purchases = pd.DataFrame({
     'Product': ['Cheese', 'Bread', 'Eggs', 'Milk', 'Gooseberries'],
@@ -86,32 +92,45 @@ def app_login():
     if st.button("Login"):
         if email == "example@example.com" and password == "password":
             st.success("Login successful!")
-            # Redirect to dashboard or other page
+            
+            st.session_state.logged_in = True  # Update session state to logged in
+            st.experimental_rerun()  # Immediately rerun the app to update UI
+            
+            
         else:
             st.error("Invalid email or password. Please try again.")
-
+            
+def app_logout():
+    if st.button("Logout"):
+        st.session_state.logged_in = False  # Reset login status
+        st.experimental_rerun()  # Rerun the app to reflect logout on the UI
+        
 def app_insights():
     st.title("💡 Insights")
     st.write("Financial and health insights will be detailed here.")
 
 def main():
-    #st.sidebar.image("logo.png", use_column_width=True)
-    st.sidebar.title("Navigate")
-    options = st.sidebar.radio("Select a Page:", 
-                               ["Login", "Dashboard", "Upload Receipt", "User Profile", "Insights", "Settings"])
-    
-    if options == "Login":
+    if st.session_state.logged_in:  # Show navigation only if logged in
+        #st.sidebar.image("logo.png", use_column_width=True)
+        st.sidebar.title("Navigate")
+        options = st.sidebar.radio("Select a Page:", 
+                                ["Login", "Dashboard", "Upload Receipt", "User Profile", "Insights", "Settings"])
+        
+        if options == "Login":
+            app_login()
+        elif options == "Dashboard":
+            view_dashboard()
+        elif options == "Upload Receipt":
+            upload_receipt()
+        elif options == "User Profile":
+            manage_user_profile()
+        elif options == "Insights":
+            app_insights()
+        elif options == "Settings":
+            app_settings()
+
+    else:
         app_login()
-    elif options == "Dashboard":
-        view_dashboard()
-    elif options == "Upload Receipt":
-        upload_receipt()
-    elif options == "User Profile":
-        manage_user_profile()
-    elif options == "Insights":
-        app_insights()
-    elif options == "Settings":
-        app_settings()
 
 if __name__ == "__main__":
     main()
