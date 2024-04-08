@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 from database_core import add_to_users_collection, init_weaviate_client , generate_unique_user_id , read_all_objects
 
+import plotly.express as px
+from datetime import datetime
 
 import pandas as pd
 from fpdf import FPDF
@@ -104,11 +106,10 @@ def upload_receipt():
             }
             df_extracted = pd.DataFrame(extracted_data)
             st.success("Receipt processed successfully!")
-            st.dataframe(df_extracted)
-
-            # Assuming you have a function to append or update the extracted data to a database or a file
-            # update_database(df_extracted)
-
+            
+            if st.button("Process Recipt"):
+                st.write("clicked")
+                
             # Generate and display download link for the report (PDF)
             if st.button('Download Report as PDF'):
                 pdf_path = generate_pdf(df_extracted)
@@ -116,20 +117,54 @@ def upload_receipt():
                     base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
                 pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf">'
                 st.markdown(pdf_display, unsafe_allow_html=True)
-                st.markdown(download_link(df_extracted, 'report.csv', 'Download CSV Report'), unsafe_allow_html=True)
+                st.markdown(download_link(df_extracted, 'report.csv', 'Download CSV Report'), unsafe_allow_html=True)  
+                
+                          
+            if st.checkbox("more details"):
+                ## Temp
+                st.dataframe(df_extracted)
+                # Assuming you have a function to append or update the extracted data to a database or a file
+                # update_database(df_extracted)
+
+
 
 def view_dashboard():
     st.title('📊 Your Dashboard')
-    dashboard_mode = st.selectbox("Switch Dashboard Mode", ["Financial", "Health"])
+
+    # Place a date range selector in the sidebar for calendar navigation
+    st.sidebar.title("Navigation")
     
-        
+    try:
+        start_date, end_date = st.sidebar.date_input(
+            "Select Date Range",
+            value=(datetime.now().date(), datetime.now().date()),
+            min_value=datetime(2020, 1, 1).date(),
+            max_value=datetime.now().date()
+        )
+
+        # Ensure the start date is not after the end date
+        if start_date > end_date:
+            st.sidebar.error("Start date cannot be after end date. Please select a valid date range.")
+            return  # Exit the function to prevent the rest of the code from running
+
+        # Display selected date range
+        st.sidebar.write(f"Selected dates: {start_date} to {end_date}")
+    
+    except Exception as e:
+        st.sidebar.error(f"An error occurred with date selection: {e}")
+        return  # Exit the function if there's an error with the date input
+
+    # Add dashboard mode selector in the main area
+    dashboard_mode = st.selectbox("Switch Dashboard Mode", ["Financial", "Health"])
         
     if dashboard_mode == "Financial":
         st.subheader("Financial Insights")
+        # Assuming 'user_purchases' is filtered based on the selected date range
         fig = px.bar(user_purchases, x='Product', y='Amount', title="Spending by Product")
         st.plotly_chart(fig)
     elif dashboard_mode == "Health":
         st.subheader("Health Insights")
+        # Assuming 'user_purchases' is filtered based on the selected date range
         health_fig = px.scatter(user_purchases, x='Product', y='Health Score', size='Amount', color='Category', title="Health Score of Purchases")
         st.plotly_chart(health_fig)
 
