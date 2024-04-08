@@ -4,6 +4,15 @@ import plotly.express as px
 from database_core import add_to_users_collection, init_weaviate_client , generate_unique_user_id , read_all_objects
 
 
+import pandas as pd
+from fpdf import FPDF
+import base64
+import tempfile
+
+
+# vision library
+from vision_core import generate_prediction
+
 
 # Initialize session state for login status and active page
 if 'logged_in' not in st.session_state:
@@ -29,41 +38,8 @@ user_profile = {
     'Receive Notifications': True,
 }
 
-def manage_user_profile():
-    st.title("👤 User Profile")
-    with st.form("user_profile", clear_on_submit=False):
-        st.subheader("Edit your profile information:")
-        col1, col2 = st.columns(2)
-        with col1:
-            name = st.text_input("Name", user_profile['Name'])
-            email = st.text_input("Email", user_profile['Email'])
-        with col2:
-            financial_goal = st.text_input("Financial Goal", user_profile['Financial Goal'])
-            health_goal = st.text_input("Health Goal", user_profile['Health Goal'])
-        
-        receive_notifications = st.checkbox("Receive Notifications", user_profile['Receive Notifications'])
-        RN = 1
 
-        submitted = st.form_submit_button("Save Changes")
 
-        if submitted:
-            st.success("Profile updated successfully!")
-            user_id = generate_unique_user_id(name, email)  # This is a placeholder function; implement accordingly
-            user_id = "ROOT"
-            client = init_weaviate_client()
-            add_to_users_collection(client = client, name=name, financial_goal=financial_goal, email=email, health_goal=health_goal, notification_status=RN , user_id=user_id)
-        
-    if st.button("database"):
-        read_all_objects()
-
-''' 
-
-### REPLIT COMMIT STARTS HERE ###
-import streamlit as st
-import pandas as pd
-from fpdf import FPDF
-import base64
-import tempfile
 
 def generate_pdf(table):
     pdf = FPDF()
@@ -83,11 +59,41 @@ def download_link(object_to_download, download_filename, download_link_text):
     b64 = base64.b64encode(object_to_download.encode()).decode()
     return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
+
+
+
+def manage_user_profile():
+    st.title("👤 User Profile")
+    with st.form("user_profile", clear_on_submit=False):
+        st.subheader("Edit your profile information:")
+        col1, col2 = st.columns(2)
+        with col1:
+            name = st.text_input("Name", user_profile['Name'])
+            email = st.text_input("Email", user_profile['Email'])
+        with col2:
+            financial_goal = st.text_input("Financial Goal", user_profile['Financial Goal'])
+            health_goal = st.text_input("Health Goal", user_profile['Health Goal'])
+        
+        receive_notifications = st.checkbox("Receive Notifications", user_profile['Receive Notifications'])
+        RN = 1
+
+        submitted = st.form_submit_button("Save Changes")
+
+        if submitted:
+            st.success("Profile updated successfully!")
+            user_id = generate_unique_user_id(name)  # This is a placeholder function; implement accordingly
+            client = init_weaviate_client()
+            add_to_users_collection(client = client, name=name, financial_goal=financial_goal, email=email, health_goal=health_goal, notification_status=RN , user_id=user_id)
+        
+    if st.button("database"):
+        read_all_objects()
+
 def upload_receipt():
     st.title("📄 Upload Receipt")
     uploaded_file = st.file_uploader("Choose a file", type=['png', 'jpg', 'jpeg'])
     if uploaded_file is not None:
-        st.image(uploaded_file, caption='Uploaded Receipt', use_column_width=True)
+        with st.expander("Uploaded Image"):
+            st.image(uploaded_file, caption='Uploaded Receipt', width=150)
         with st.spinner('Processing...'):
             # Placeholder for OCR processing - replace with actual OCR/model code
             # For now, simulate data extraction
@@ -111,26 +117,6 @@ def upload_receipt():
                 pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf">'
                 st.markdown(pdf_display, unsafe_allow_html=True)
                 st.markdown(download_link(df_extracted, 'report.csv', 'Download CSV Report'), unsafe_allow_html=True)
-
-# Remember to call upload_receipt somewhere in your app to display it.
-
-
-
-
-
-
-### REPLIT COMMIT ENDS HERE ###
-
-'''
-
-def upload_receipt():
-    st.title("📄 Upload Receipt")
-    uploaded_file = st.file_uploader("Choose a file", type=['png', 'jpg', 'jpeg'])
-    if uploaded_file is not None:
-        st.image(uploaded_file, caption='Uploaded Receipt', use_column_width=True)
-        with st.spinner('Processing...'):
-            # Placeholder for actual processing
-            st.success("Receipt processed successfully!")
 
 def view_dashboard():
     st.title('📊 Your Dashboard')
@@ -163,7 +149,7 @@ def app_login():
             st.success("Login successful!")
             
             st.session_state.logged_in = True  # Update session state to logged in
-            st.experimental_rerun()  # Immediately rerun the app to update UI
+            st.rerun()  # Immediately rerun the app to update UI
             
             
         else:
@@ -172,7 +158,7 @@ def app_login():
 def app_logout():
     if st.button("Logout",key="logout-btn"):
         st.session_state.logged_in = False  # Reset login status
-        st.experimental_rerun()  # Rerun the app to reflect logout on the UI
+        st.rerun()  # Rerun the app to reflect logout on the UI
         
 def app_insights():
     st.title("💡 Insights")
@@ -191,7 +177,7 @@ def render_navigation():
         for page in pages:
             if st.button(page):
                 st.session_state.active_page = page
-                st.experimental_rerun()  # Rerun the app with the new active_page
+                st.rerun()  # Rerun the app with the new active_page
 
 def main():
     render_navigation()
