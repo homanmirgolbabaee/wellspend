@@ -4,19 +4,15 @@ import anthropic
 import base64
 import io
 
-# Set your Anthropics API key here. In a real app, consider using st.secrets to securely manage your API key.
+# Assuming your Anthropics API key is set up in Streamlit’s secrets
 anthropic_api_key = st.secrets["anthropic_api"]
-
-# Initialize the Anthropics client with your API key
 client = anthropic.Anthropic(api_key=anthropic_api_key)
 
-def process_image(image,prompt):
-    # Convert the PIL image to a BytesIO buffer and then to a base64 encoded string
+def process_image(image):
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
-
-    # Anthropics API call with the base64 encoded image
+    
     response = client.messages.create(
         model="claude-3-opus-20240229",
         max_tokens=1000,
@@ -36,29 +32,39 @@ def process_image(image,prompt):
                     },
                     {
                         "type": "text",
-                        "text": prompt
+                        "text": "\ni have uploaded a receipt, can you tell me all the information you see in a structured way?"
                     }
                 ]
             }
         ]
     )
-
-    # Extract and return the API response
     return response.content
 
 def main():
-    st.title("Image Processing App")
+    # Enhanced UI/UX
+    st.sidebar.header("App Navigation")
+    st.sidebar.info("This is a demo application to showcase image processing with AI. Upload an image, and let AI do the magic!")
     
+    st.title("AI-Powered Image Processing App")
+    st.markdown("Welcome to this AI-powered image processing application. Please upload an image to get started.")
+
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-    prompt = st.text_input("Prompt")
+    
     if uploaded_file is not None:
-        # Convert the uploaded file to a PIL Image
-        image = Image.open(uploaded_file)
-        if st.button("Process"):
-            # Process the image and get the response
-            response = process_image(image,prompt)
-            # Display the response on the page
-            st.write(response)
+        
+        with st.expander("Preview Image"):
+            st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+        if st.button("Process Image"):
+            with st.spinner('Processing...'):
+                image = Image.open(uploaded_file)
+                response = process_image(image)
+                st.success("Processing complete!")
+                st.write(response)
+            st.balloons()  # Add a little celebration effect
+
+    st.markdown("---")
+    st.markdown("<h6 style='text-align: center; color: gray;'>AI Image Processing App © 2024</h6>", unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
